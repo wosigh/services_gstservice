@@ -1,8 +1,0 @@
-Package: org.webosinternals.gstservice
-Version: 0.1.1
-Architecture: all
-Maintainer: Jason Robitaille, Zsoc
-Description: GstService
-Section: misc
-Priority: optional
-Source: { "Source":"http://webos-internals.org", "Type":"Service", "Category":"Services and Plugins", "Title":"GstService", "FullDescription":"A service that acesses and controls the Pre's camera to do video recording.", "Homepage":"http://webos-internals.org", "License":"Open Source", "PostInstallFlags":"RestartJava", "PostRemoveFlags":"RestartJava" }

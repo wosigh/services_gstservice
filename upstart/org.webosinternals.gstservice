@@ -1,0 +1,36 @@
+description "GStreamer Service"
+
+start on started java-serviceboot
+
+#console output
+
+script
+   logger "org.webosinternals.gstservice upstart: script called"
+
+   sleep 10
+   logger "org.webosinternals.gstservice upstart: delay done"
+
+   returnTrue=0
+   tries=0
+   while [ $returnTrue -eq 0 -a $tries -le 20 ]
+   do
+      returnVal=$(luna-send -n 1 luna://org.webosinternals.gstservice/status '{}' 2>&1)
+
+      logger "org.webosinternals.gstservice upstart: returnVal is $returnVal"
+
+      tries=`expr $tries + 1`
+      if [ "$returnVal" = "** Message: serviceResponse Handling: 2, {\"returnValue\":true}" ]
+      then
+         returnTrue=1
+      else
+         sleep 10
+      fi
+   done
+
+   logger "org.webosinternals.gstservice upstart: $returnTrue"
+   logger "org.webosinternals.gstservice upstart: $tries"
+
+   logger "org.webosinternals.gstservice upstart: done"
+end script
+
+#respawn
