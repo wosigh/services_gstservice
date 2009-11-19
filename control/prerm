@@ -1,13 +1,23 @@
 #!/bin/sh
-rm -f /usr/lib/luna/java/GstService.jar
-rm -f /usr/share/dbus-1/system-services/ca.canucksoftware.videocam.service
-rm -f /etc/event.d/videocam
-mv -f /usr/bin/gst-launch.BACKUP /usr/bin/gst-launch
-mv -f /usr/bin/gst-launch-0.10.BACKUP /usr/bin/gst-launch-0.10
 
+# Stop the service
+/sbin/stop org.webosinternals.gstservice
+
+# Remove the java dbus service
+rm -f /usr/lib/luna/java/org.webosinternals.gstservice.jar
+rm -f /usr/share/dbus-1/system-services/org.webosinternals.gstservice.service
+
+# Remove the upstart script
+rm -f /etc/event.d/org.webosinternals.gstservice
+
+# Restart the service handler
 if [ -z "$IPKG_OFFLINE_ROOT" ]; then # Defined by recent installers that also support flags.
     /sbin/stop java-serviceboot
     /sbin/start java-serviceboot
 fi
+
+# These should be done by the library
+# mv -f /usr/bin/gst-launch.BACKUP /usr/bin/gst-launch
+# mv -f /usr/bin/gst-launch-0.10.BACKUP /usr/bin/gst-launch-0.10
 
 exit 0
