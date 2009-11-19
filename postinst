@@ -1,0 +1,18 @@
+#!/bin/sh
+rm -f /usr/lib/luna/java/GstService.jar
+mv -f /var/usr/lib/luna/java/GstService.jar /usr/lib/luna/java/GstService.jar
+rm -f /usr/share/dbus-1/system-services/org.webosinternals.gstservice.service
+mv -f /var/usr/share/dbus-1/system-services/org.webosinternals.gstservice.service /usr/share/dbus-1/system-services/org.webosinternals.gstservice.service
+rm -f /etc/event.d/gstservice
+mv -f /var/etc/event.d/gstservice /etc/event.d/gstservice
+mv -f /usr/bin/gst-launch /usr/bin/gst-launch.BACKUP
+mv -f /usr/bin/gst-launch-0.10 /usr/bin/gst-launch-0.10.BACKUP
+mv -f /var/usr/bin/gst-launch /usr/bin/gst-launch
+mv -f /var/usr/bin/gst-launch-0.10 /usr/bin/gst-launch-0.10
+
+if [ -z "$IPKG_OFFLINE_ROOT" ]; then # Defined by recent installers that also support flags.
+    /sbin/stop java-serviceboot
+    /sbin/start java-serviceboot
+fi
+
+exit 0
