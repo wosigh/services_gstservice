@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="org.webosinternals.gstservice" default="jar" basedir=".">
+	<target name="clean">
+		<delete file="org.webosinternals.gstservice.jar"/>
+	</target>
+	<target name="build">
+		<javac 
+			classpath="serviceframework.jar:lunaservice.jar:json.jar:Utils.jar"
+			srcdir="."
+			destdir="."
+		/>
+ 	</target>
+	<target name="jar" depends="build">
+		<jar
+			destfile="org.webosinternals.gstservice.jar"
+			basedir="."
+			includes="**/*.class"
+		/>
+    </target>
+	<target name="upload" depends="jar">
+		 <exec executable="scp">
+		    <arg value="org.webosinternals.gstservice.jar"/>
+		    <arg value="root@webos:/usr/lib/luna/java/"/>
+		  </exec>
+		 <exec executable="ssh">
+		    <arg value="root@webos"/>
+		    <arg value="stop java-serviceboot"/>
+		  </exec>
+		 <exec executable="ssh">
+		    <arg value="root@webos"/>
+		    <arg value="start java-serviceboot"/>
+		  </exec>
+	</target>
+</project>
