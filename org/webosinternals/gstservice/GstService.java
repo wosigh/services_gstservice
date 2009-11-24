@@ -28,7 +28,7 @@ public class GstService extends LunaServiceThread {
 	private CommandLine cmd;
 	
 	public GstService() {
-		this.hwVersion = "0.2.2";
+		this.hwVersion = "0.2.3";
 		cmd = null;
 		currOutput = null;
 		useFlash = false;
@@ -115,7 +115,7 @@ public class GstService extends LunaServiceThread {
 	}
 	
 	private String buildGstCall(String audio, String video, String mux, String stream) {
-		return "/var/usr/palm/applications/gstservice/bin/gst-launch -e camsrc ! palmvideoencoder videoformat=" + video
+		return "/var/usr/palm/applications/org.webosinternals.gstservice/bin/gst-launch -e camsrc ! palmvideoencoder videoformat=" + video
 				+ " ! palmmpeg4mux name=mux QTQCELPMuxing=" + mux + " StreamMuxSelection="
 				+ stream + " enable=true alsasrc ! queue ! palmaudioencoder encoding="
 				+ audio + " enable=true ! mux.";
