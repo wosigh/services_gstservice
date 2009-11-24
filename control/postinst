@@ -16,10 +16,4 @@ if [ -z "$IPKG_OFFLINE_ROOT" ]; then # Defined by recent installers that also su
     /sbin/start java-serviceboot
 fi
 
-# These should be done by the library
-# mv -f /usr/bin/gst-launch /usr/bin/gst-launch.BACKUP
-# mv -f /usr/bin/gst-launch-0.10 /usr/bin/gst-launch-0.10.BACKUP
-# mv -f /var/usr/bin/gst-launch /usr/bin/gst-launch
-# mv -f /var/usr/bin/gst-launch-0.10 /usr/bin/gst-launch-0.10
-
 exit 0
