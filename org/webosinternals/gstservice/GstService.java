@@ -1,4 +1,4 @@
-package org.webosinternals;
+package org.webosinternals.gstservice;
 
 import com.palm.luna.LSException;
 import com.palm.luna.service.LunaServiceThread;

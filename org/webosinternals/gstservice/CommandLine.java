@@ -5,7 +5,7 @@
 	MIT License
 */
 
-package org.webosinternals;
+package org.webosinternals.gstservice;
 
 import java.util.ArrayList;
 //import java.io.BufferedReader;
