@@ -28,7 +28,7 @@ public class GstService extends LunaServiceThread {
 	private CommandLine cmd;
 	
 	public GstService() {
-		this.hwVersion = "0.1.1";
+		this.hwVersion = "0.2.0";
 		cmd = null;
 		currOutput = null;
 		useFlash = false;
