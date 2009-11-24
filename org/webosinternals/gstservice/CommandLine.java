@@ -1,26 +1,30 @@
 /*
 	CommandLine.java
 	=-=-=-=-=-=-=-=-
-	Jason Robitaille  November 15, 09
+	Jason Robitaille, zsoc
 	MIT License
 */
 
-package org.webosinternals.gstservice;
+package org.webosinternals;
 
 import java.util.ArrayList;
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
+//import java.io.BufferedReader;
+//import java.io.InputStreamReader;
 import java.io.BufferedWriter;
 import java.io.FileWriter;
 import java.io.File;
 
 public class CommandLine {
-	private final String SCRIPTFILE = "/var/gstScript.sh";
+	private static int scriptNum;
+	private String scriptfile;
+	//private Process p;
 	private ArrayList<String> cmds; //list of commands
 	private String response; //response
 	private int returnCode;
 
 	public CommandLine() {
+		scriptNum++;
+		scriptfile = "/var/gstScript" + scriptNum + ".sh";
 		cmds = new ArrayList<String>();
 		response = null;
 	}
@@ -47,7 +51,7 @@ public class CommandLine {
 		return success;
 	}
 	private File createScript() {
-		File result = new File(SCRIPTFILE);
+		File result = new File(scriptfile);
 		try {
 			BufferedWriter bw = new BufferedWriter(new FileWriter(result));
 			bw.write("#!/bin/sh\n");
@@ -66,28 +70,29 @@ public class CommandLine {
 	private boolean runScript(File script) {
 		boolean success = false;
 		try {
-			Process p = Runtime.getRuntime().exec("/bin/sh " + SCRIPTFILE);
-			BufferedReader input = new BufferedReader(
-					new InputStreamReader(p.getInputStream()));
-			String line = null;
+			Runtime.getRuntime().exec("/bin/sh " + scriptfile + " > /dev/null 2>&1");
+			//BufferedReader input = new BufferedReader(
+					//new InputStreamReader(p.getInputStream()));
+			//String line = null;
 			String output = "";
-			line = input.readLine();
-			while (line!=null) {
-				output += line;
-				line = input.readLine();
-				if(line!=null) {
-					output += " ";
-				}
-			}
+			//line = input.readLine();
+			//while (line!=null) {
+				//output += line;
+				//line = input.readLine();
+				//if(line!=null) {
+					//output += " ";
+				//}
+			//}
 			response = output;
-			returnCode = p.waitFor();
-			if(returnCode==0) {
-				success = true;
-			}
+			//returnCode = p.waitFor();
+			//if(returnCode==0) {
+				//success = true;
+			//}
 		} catch(Exception e) {
 			response = e.getMessage();
 		}
-		script.delete();
+		//script.delete();
+		scriptNum = 0;
 		return success;
 	}
 

@@ -1,11 +1,4 @@
-/*
-	GstService.java
-	=-=-=-=-=-=-=-=
-	Jason Robitaille  November 15, 09
-	MIT License
-*/
-
-package org.webosinternals.gstservice;
+package org.webosinternals;
 
 import com.palm.luna.LSException;
 import com.palm.luna.service.LunaServiceThread;
@@ -16,7 +9,7 @@ import java.io.File;
 
 
 public class GstService extends LunaServiceThread {
-
+	
 	private final String[][] AUDIOOPTIONS = new String[][] {
 			new String[] {"AAC", "AMRNB", "MP3"},
 			new String[] {"0", "1", "2"}};
@@ -32,9 +25,11 @@ public class GstService extends LunaServiceThread {
 	private String hwVersion;
 	private String currOutput;
 	private boolean useFlash;
-
+	private CommandLine cmd;
+	
 	public GstService() {
 		this.hwVersion = "0.1.1";
+		cmd = null;
 		currOutput = null;
 		useFlash = false;
 	}
@@ -47,7 +42,7 @@ public class GstService extends LunaServiceThread {
 		sb.append("}");
 		message.respond(sb.toString());
 	}
-
+	
 	@LunaServiceThread.PublicMethod
 	public void status(ServiceMessage msg) throws JSONException, LSException {
 			JSONObject reply = new JSONObject();
@@ -60,35 +55,33 @@ public class GstService extends LunaServiceThread {
 			JSONObject jsonParam = msg.getJSONPayload();
 		if(jsonParam.has("filename")) {
 			String audio, video, container, stream;
-			CommandLine cmd = new CommandLine();
 			audio = getParam(jsonParam, "audio", "0", AUDIOOPTIONS);
 			video = getParam(jsonParam, "video", "2", VIDEOOPTIONS);
 			container = getParam(jsonParam, "container", "TRUE", MUXOPTIONS);
 			stream = getParam(jsonParam, "stream", "0", STREAMOPTIONS);
 			currOutput = formatName(jsonParam.getString("filename"), container);
-
+			cmd = new CommandLine();
+			cmd.addCmd(buildGstCall(audio, video, container, stream));
+			JSONObject reply = new JSONObject();
+			reply.put("returnValue", true);
+			msg.respond(reply.toString());
+			cmd.run();
 			if(jsonParam.has("flash")) {
 				useFlash = jsonParam.getBoolean("flash");
 				if(useFlash) {
+					cmd = new CommandLine();
+					cmd.addCmd("sleep 1");
 					cmd.addCmd("echo -n 1 >/sys/class/i2c-adapter/i2c-2/2-0033/avin");
 					cmd.addCmd("echo -n 100mA >/sys/class/i2c-adapter/i2c-2/2-0033/torch_current");
 					cmd.addCmd("echo -n torch >/sys/class/i2c-adapter/i2c-2/2-0033/mode");
+					cmd.run();
 				}
-			}
-			cmd.addCmd(buildGstCall(audio, video, container, stream));
-
-			if(cmd.run()) {
-				JSONObject reply = new JSONObject();
-				reply.put("output", cmd.getResponse());
-				msg.respond(reply.toString());
-			} else {
-				msg.respondError("2", cmd.getResponse());
 			}
 		} else {
 			msg.respondError("1", "Service request missing output filename.");
 		}
 	}
-
+	
 	private String getParam(JSONObject json, String key, String plain, String[][] data)
 			throws JSONException {
 		String result = null;
@@ -105,7 +98,7 @@ public class GstService extends LunaServiceThread {
 			result = plain;
 		return result;
 	}
-
+	
 	private String formatName(String name, String container) {
 		boolean isMP4 = Boolean.parseBoolean(container.toLowerCase());
 		String result = name;
@@ -120,40 +113,39 @@ public class GstService extends LunaServiceThread {
 		}
 		return result;
 	}
-
+	
 	private String buildGstCall(String audio, String video, String mux, String stream) {
 		return "gst-launch -e camsrc ! palmvideoencoder videoformat=" + video
 				+ " ! palmmpeg4mux name=mux QTQCELPMuxing=" + mux + " StreamMuxSelection="
 				+ stream + " enable=true alsasrc ! queue ! palmaudioencoder encoding="
 				+ audio + " enable=true ! mux.";
 	}
-
+	
 	@LunaServiceThread.PublicMethod
 	public void videoStop(ServiceMessage msg) throws JSONException, LSException {
 		if(currOutput!=null) { //a recording is in process
-			CommandLine cmd = new CommandLine();
-			currOutput = null;
-			useFlash = false;
+			currOutput = cmd.getResponse();
 			if(useFlash) {
+				cmd = new CommandLine();
 				cmd.addCmd("echo -n shutdown >/sys/class/i2c-adapter/i2c-2/2-0033/mode");
 				cmd.addCmd("echo -n 0mA >/sys/class/i2c-adapter/i2c-2/2-0033/torch_current");
 				cmd.addCmd("echo -n 0 >/sys/class/i2c-adapter/i2c-2/2-0033/avin");
+				cmd.run();
 			}
-			cmd.addCmd("/usr/bin/killall -I -s INT gst-launch-0.10");
-			cmd.addCmd("sleep 2");
-			cmd.addCmd("/usr/bin/killall -I -s INT gst-launch-0.10");
-			if(cmd.run()) {
-				JSONObject reply = new JSONObject();
-				reply.put("output", cmd.getResponse());
-				reply.put("path", relocateVideo());
-				reply.put("fileindexer", updateFileIndexer());
-				msg.respond(reply.toString());
-			} else {
-				msg.respondError("1", cmd.getResponse());
-			}
+			useFlash = false;
+			cmd = new CommandLine();
+			cmd.addCmd("pkill -SIGINT gst-launch");
+			cmd.addCmd("sleep 3");
+			cmd.addCmd("pkill -SIGINT gst-launch");
+			cmd.addCmd("pkill -SIGINT camd");
+			JSONObject reply = new JSONObject();
+			reply.put("output", currOutput);
+			reply.put("path", relocateVideo());
+			msg.respond(reply.toString());
+			cmd.run();
 		}
 	}
-
+	
 	private String relocateVideo() {
 		File baseDir = new File("/media/internal/");
 		File[] files = baseDir.listFiles();
@@ -180,13 +172,13 @@ public class GstService extends LunaServiceThread {
 		}
 		return dest.getPath();
 	}
-
-	private String updateFileIndexer() {
+	
+	/*private String updateFileIndexer() {
 		CommandLine forceRescan = new CommandLine();
 		forceRescan.addCmd("/sbin/stop fileindexer");
 		forceRescan.addCmd("/bin/rm -f /var/luna/data/mediadb.db3");
 		forceRescan.addCmd("/sbin/start fileindexer");
 		forceRescan.run();
 		return forceRescan.getResponse();
-	}
+	}*/
 }
