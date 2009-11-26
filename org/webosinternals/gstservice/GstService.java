@@ -22,16 +22,18 @@ public class GstService extends LunaServiceThread {
 	private final String[][] STREAMOPTIONS = new String[][] {
 			new String[] {"audio", "video", "both"},
 			new String[] {"2", "1", "0"}};
+	private final String[][] BRIGHTNESSOPTIONS = new String[][] {
+			new String[] {"off", "low", "medium", "high"},
+			new String[] {"0", "50", "100", "150"}};
 	private String hwVersion;
 	private String currOutput;
-	private boolean useFlash;
+	//private String useFlash;
 	private CommandLine cmd;
 	
 	public GstService() {
-		this.hwVersion = "0.2.3";
+		this.hwVersion = "0.2.4";
 		cmd = null;
 		currOutput = null;
-		useFlash = false;
 	}
 
 	@LunaServiceThread.PublicMethod
@@ -54,11 +56,12 @@ public class GstService extends LunaServiceThread {
 	public void videoRec(ServiceMessage msg) throws JSONException, LSException {
 			JSONObject jsonParam = msg.getJSONPayload();
 		if(jsonParam.has("filename")) {
-			String audio, video, container, stream;
+			String audio, video, container, stream, brightness;
 			audio = getParam(jsonParam, "audio", "0", AUDIOOPTIONS);
 			video = getParam(jsonParam, "video", "2", VIDEOOPTIONS);
 			container = getParam(jsonParam, "container", "TRUE", MUXOPTIONS);
 			stream = getParam(jsonParam, "stream", "0", STREAMOPTIONS);
+			brightness = getParam(jsonParam, "brightness", "0", BRIGHTNESSOPTIONS);
 			currOutput = formatName(jsonParam.getString("filename"), container);
 			cmd = new CommandLine();
 			cmd.addCmd(buildGstCall(audio, video, container, stream));
@@ -66,18 +69,14 @@ public class GstService extends LunaServiceThread {
 			reply.put("returnValue", true);
 			msg.respond(reply.toString());
 			cmd.run();
-			if(jsonParam.has("flash")) {
-				useFlash = jsonParam.getBoolean("flash");
-				if(useFlash) {
-					cmd = new CommandLine();
-					cmd.addCmd("sleep 1");
-					cmd.addCmd("echo -n 1 >/sys/class/i2c-adapter/i2c-2/2-0033/avin");
-					cmd.addCmd("echo -n 100mA >/sys/class/i2c-adapter/i2c-2/2-0033/torch_current");
-					cmd.addCmd("echo -n torch >/sys/class/i2c-adapter/i2c-2/2-0033/mode");
-					cmd.run();
-				}
+			cmd = new CommandLine();
+			cmd.addCmd("sleep 1");
+			cmd.addCmd("echo -n 1 >/sys/class/i2c-adapter/i2c-2/2-0033/avin");
+			cmd.addCmd("echo -n " + brightness + "mA >/sys/class/i2c-adapter/i2c-2/2-0033/torch_current");
+			cmd.addCmd("echo -n torch >/sys/class/i2c-adapter/i2c-2/2-0033/mode");
+			cmd.run();
 			}
-		} else {
+		else {
 			msg.respondError("1", "Service request missing output filename.");
 		}
 	}
@@ -125,24 +124,21 @@ public class GstService extends LunaServiceThread {
 	public void videoStop(ServiceMessage msg) throws JSONException, LSException {
 		if(currOutput!=null) { //a recording is in process
 			currOutput = cmd.getResponse();
-			if(useFlash) {
-				cmd = new CommandLine();
-				cmd.addCmd("echo -n shutdown >/sys/class/i2c-adapter/i2c-2/2-0033/mode");
-				cmd.addCmd("echo -n 0mA >/sys/class/i2c-adapter/i2c-2/2-0033/torch_current");
-				cmd.addCmd("echo -n 0 >/sys/class/i2c-adapter/i2c-2/2-0033/avin");
-				cmd.run();
-			}
-			useFlash = false;
+			cmd = new CommandLine();
+			cmd.addCmd("echo -n shutdown >/sys/class/i2c-adapter/i2c-2/2-0033/mode");
+			cmd.addCmd("echo -n 0mA >/sys/class/i2c-adapter/i2c-2/2-0033/torch_current");
+			cmd.addCmd("echo -n 0 >/sys/class/i2c-adapter/i2c-2/2-0033/avin");
+			cmd.run();
 			cmd = new CommandLine();
 			cmd.addCmd("pkill -SIGINT gst-launch");
 			cmd.addCmd("sleep 3");
 			cmd.addCmd("pkill -SIGINT gst-launch");
 			cmd.addCmd("pkill -SIGINT camd");
+			cmd.run();
 			JSONObject reply = new JSONObject();
 			reply.put("output", currOutput);
 			reply.put("path", relocateVideo());
 			msg.respond(reply.toString());
-			cmd.run();
 		}
 	}
 	
@@ -168,7 +164,9 @@ public class GstService extends LunaServiceThread {
 			}
 		}
 		if(newest!=null) {
-			newest.renameTo(dest);
+			cmd = new CommandLine();
+			cmd.addCmd("mv " + newest + " " + dest + "/" + currOutput +"");
+			cmd.run();
 		}
 		return dest.getPath();
 	}
