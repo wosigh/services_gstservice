@@ -31,7 +31,7 @@ public class GstService extends LunaServiceThread {
 	private CommandLine cmd;
 	
 	public GstService() {
-		this.hwVersion = "0.3.1";
+		this.hwVersion = "0.3.2";
 		cmd = null;
 		currOutput = null;
 	}
