@@ -31,7 +31,7 @@ public class GstService extends LunaServiceThread {
 	private CommandLine cmd;
 	
 	public GstService() {
-		this.hwVersion = "0.3.0";
+		this.hwVersion = "0.2.4";
 		cmd = null;
 		currOutput = null;
 	}
@@ -168,7 +168,8 @@ public class GstService extends LunaServiceThread {
 			cmd.addCmd("mv " + newest + " " + dest + "/" + currOutput +"");
 			cmd.run();
 		}
-		return dest.getPath();
+		String newestfn = newest.getName();
+		return newestfn;
 	}
 	
 	/*private String updateFileIndexer() {
