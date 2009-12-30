@@ -2,18 +2,12 @@
 
 # Install the java dbus service
 rm -f /usr/lib/luna/java/org.webosinternals.gstservice.jar
-ln -s /var/usr/lib/luna/java/org.webosinternals.gstservice.jar /usr/lib/luna/java/org.webosinternals.gstservice.jar
+cp $IPKG_OFFLINE_ROOT/usr/lib/luna/java/org.webosinternals.gstservice.jar /usr/lib/luna/java/org.webosinternals.gstservice.jar
 rm -f /usr/share/dbus-1/system-services/org.webosinternals.gstservice.service
-ln -s /var/usr/share/dbus-1/system-services/org.webosinternals.gstservice.service /usr/share/dbus-1/system-services/org.webosinternals.gstservice.service
+cp $IPKG_OFFLINE_ROOT/usr/share/dbus-1/system-services/org.webosinternals.gstservice.service /usr/share/dbus-1/system-services/org.webosinternals.gstservice.service
 
 # Install the upstart script
 rm -f /etc/event.d/org.webosinternals.gstservice
-cp /var/etc/event.d/org.webosinternals.gstservice /etc/event.d/org.webosinternals.gstservice
-
-# Restart the service handler (this also starts this service)
-if [ -z "$IPKG_OFFLINE_ROOT" ]; then # Defined by recent installers that also support flags.
-    /sbin/stop java-serviceboot
-    /sbin/start java-serviceboot
-fi
+cp $IPKG_OFFLINE_ROOT/etc/event.d/org.webosinternals.gstservice /etc/event.d/org.webosinternals.gstservice
 
 exit 0
