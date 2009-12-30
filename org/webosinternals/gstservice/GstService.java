@@ -114,7 +114,17 @@ public class GstService extends LunaServiceThread {
 	}
 	
 	private String buildGstCall(String audio, String video, String mux, String stream) {
-		return "/var/usr/palm/applications/org.webosinternals.gstservice/bin/gst-launch -e camsrc ! palmvideoencoder videoformat=" + video
+
+		File cryptofs = new File("/media/cryptofs/apps");
+		String ipkgOfflineRoot;
+
+		if (cryptofs.exists()) {
+			ipkgOfflineRoot = "/media/cryptofs/apps";
+		} else {
+			ipkgOfflineRoot = "/var";
+		}
+
+		return ipkgOfflineRoot + "/usr/palm/applications/org.webosinternals.gstservice/bin/gst-launch -e camsrc ! palmvideoencoder videoformat=" + video
 				+ " ! palmmpeg4mux name=mux QTQCELPMuxing=" + mux + " StreamMuxSelection="
 				+ stream + " enable=true alsasrc ! queue ! palmaudioencoder encoding="
 				+ audio + " enable=true ! mux.";
